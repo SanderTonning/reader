@@ -43,7 +43,9 @@ public final class SyncEngine: ObservableObject {
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         do {
             #if os(macOS)
-            let data = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+            // Sikkerhetsbegrensede bokmerker krever en signert app i sandkasse; usignerte utviklerbygg får et vanlig.
+            let data = try (try? url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil))
+                ?? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             #else
             let data = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             #endif
@@ -64,7 +66,8 @@ public final class SyncEngine: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: bookmarkKey) else { return nil }
         var stale = false
         #if os(macOS)
-        let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale)
+        let url = (try? URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale))
+            ?? (try? URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &stale))
         #else
         let url = try? URL(resolvingBookmarkData: data, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
         #endif
