@@ -33,7 +33,7 @@ public final class ArticleImporter: NSObject, WKNavigationDelegate {
     }
 
     /// Finner første lenke i en tekst, for eksempel fra utklippstavlen.
-    public static func firstURL(in text: String) -> URL? {
+    nonisolated public static func firstURL(in text: String) -> URL? {
         let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
         let range = NSRange(text.startIndex..., in: text)
         return detector?.firstMatch(in: text, range: range)?.url
