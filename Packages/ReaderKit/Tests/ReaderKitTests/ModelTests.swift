@@ -35,3 +35,26 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(fetched.first?.position?.page, 12)
     }
 }
+
+final class SyncTests: XCTestCase {
+    func testSharedFileRules() {
+        let own = Book(title: "Egen", format: .epub, fileName: "egen.epub")
+        XCTAssertTrue(SyncEngine.needsSharedFile(own))
+        XCTAssertEqual(SyncEngine.sharedFileName(for: own), "\(own.id.uuidString).epub")
+
+        let gutenberg = Book(title: "Sult", format: .epub, sourceID: "gutenberg", sourceItemID: "1", fileName: "sult.epub", remoteURL: URL(string: "https://example.com/sult.epub"))
+        XCTAssertFalse(SyncEngine.needsSharedFile(gutenberg))
+
+        let streamed = Book(title: "Lydbok", format: .audio, sourceID: "librivox")
+        XCTAssertFalse(SyncEngine.needsSharedFile(streamed))
+    }
+
+    func testNewestPositionWins() throws {
+        let older = ReadingPosition(totalProgression: 0.2, updatedAt: Date(timeIntervalSince1970: 100), deviceName: "Mac")
+        let newer = ReadingPosition(totalProgression: 0.6, updatedAt: Date(timeIntervalSince1970: 200), deviceName: "iPhone")
+        XCTAssertTrue(newer.updatedAt > older.updatedAt)
+        let decoded = try XCTUnwrap(ReadingPosition.decode(newer.encoded()))
+        XCTAssertEqual(decoded.deviceName, "iPhone")
+        XCTAssertEqual(decoded.updatedAt, newer.updatedAt)
+    }
+}

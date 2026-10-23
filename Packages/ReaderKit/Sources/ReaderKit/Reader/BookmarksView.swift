@@ -35,7 +35,10 @@ struct BookmarksView: View {
                         }
                         .onDelete { offsets in
                             let items = book.sortedBookmarks
-                            for index in offsets { context.delete(items[index]) }
+                            for index in offsets {
+                                SyncTombstones.recordBookmark(items[index].id)
+                                context.delete(items[index])
+                            }
                             try? context.save()
                         }
                     }

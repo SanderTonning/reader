@@ -173,13 +173,20 @@ public enum LibraryImporter {
         return saveCover(data: data, bookID: bookID)
     }
 
-    /// Sletter boken og filene dens.
+    /// Sletter boken og filene dens, også på andre enheter ved neste synk.
     public static func delete(_ book: Book, from context: ModelContext) {
+        SyncTombstones.recordBook(book.id)
+        for bookmark in book.bookmarks ?? [] { SyncTombstones.recordBookmark(bookmark.id) }
+        removeFiles(of: book)
+        context.delete(book)
+        try? context.save()
+    }
+
+    /// Fjerner lokale filer for en bok (fil, omslag og utpakket EPUB).
+    public static func removeFiles(of book: Book) {
+        if AudioPlayer.shared.book?.id == book.id { AudioPlayer.shared.unload() }
         if let localURL = book.localURL { try? FileManager.default.removeItem(at: localURL) }
         if let cover = book.coverFileName { try? FileManager.default.removeItem(at: LibraryFolder.covers.appendingPathComponent(cover)) }
         EPUBPublication.removeCache(for: book.id)
-        if AudioPlayer.shared.book?.id == book.id { AudioPlayer.shared.unload() }
-        context.delete(book)
-        try? context.save()
     }
 }

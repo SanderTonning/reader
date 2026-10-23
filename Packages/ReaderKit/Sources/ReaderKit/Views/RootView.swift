@@ -5,6 +5,8 @@ public struct RootView: View {
     @Environment(\.modelContext) private var context
     @StateObject private var importState = ImportState()
     @StateObject private var player = AudioPlayer.shared
+    @StateObject private var sync = SyncEngine.shared
+    @Environment(\.scenePhase) private var scenePhase
     @State private var tab = 0
 
     public init() {}
@@ -24,9 +26,29 @@ public struct RootView: View {
             .safeAreaInset(edge: .bottom) { miniPlayer }
             .tabItem { Label("Utforsk", systemImage: "building.columns") }
             .tag(1)
+
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem { Label("Innstillinger", systemImage: "gearshape") }
+            .tag(2)
         }
         .environmentObject(importState)
         .onOpenURL(perform: handle)
+        .task {
+            DeviceInfo.prepare()
+            // Synk ved oppstart og deretter hvert andre minutt mens appen er åpen.
+            while !Task.isCancelled {
+                await sync.sync(context: context)
+                try? await Task.sleep(for: .seconds(120))
+            }
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase != .active {
+                AudioPlayer.shared.savePosition()
+            }
+            Task { await sync.sync(context: context) }
+        }
     }
 
     @ViewBuilder

@@ -27,6 +27,7 @@ struct TextReaderView: View {
     @State private var showAppearance = false
     @State private var showTranslation = false
     @State private var isSpeechActive = false
+    @State private var handoffMessage: String?
 
     private var theme: ReaderTheme { ReaderTheme(rawValue: themeRaw) ?? .light }
     private var appearance: ReaderAppearance {
@@ -62,6 +63,20 @@ struct TextReaderView: View {
                 } else {
                     chapterBar
                 }
+            }
+        }
+        .overlay(alignment: .top) {
+            if let handoffMessage {
+                Text(handoffMessage)
+                    .font(.callout)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(.top, 8)
+                    .task {
+                        try? await Task.sleep(for: .seconds(4))
+                        withAnimation { self.handoffMessage = nil }
+                    }
             }
         }
         .preferredColorScheme(theme.colorScheme)
@@ -192,6 +207,9 @@ struct TextReaderView: View {
         guard !didRestore else { return }
         didRestore = true
         if let position = book.position {
+            if position.deviceName != DeviceInfo.name, let percent = position.percentText {
+                handoffMessage = "Fortsetter der du slapp på \(position.deviceName) (\(percent))"
+            }
             chapterIndex = document.chapterIndex(for: position.href) ?? 0
             progression = position.progression ?? 0
             scrollTarget = progression
