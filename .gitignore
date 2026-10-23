@@ -1,0 +1,11 @@
+# Generert av XcodeGen (kjør `xcodegen`)
+*.xcodeproj
+# Xcode / SwiftPM
+DerivedData/
+.build/
+.swiftpm/
+xcuserdata/
+*.xcuserstate
+build/
+.DS_Store
+Generated/

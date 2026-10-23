@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test og bygg (iOS + macOS)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vis Xcode-versjon
+        run: xcodebuild -version
+
+      - name: Installer verktøy
+        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen; which xcbeautify || brew install xcbeautify
+
+      - name: Generer Xcode-prosjekt
+        run: xcodegen generate
+
+      - name: Test ReaderKit (macOS)
+        run: |
+          set -o pipefail
+          swift test --package-path Packages/ReaderKit 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Bygg iOS-appen
+        run: |
+          set -o pipefail
+          xcodebuild build -project Reader.xcodeproj -scheme Reader_iOS \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | xcbeautify --renderer github-actions
+
+      - name: Bygg macOS-appen
+        run: |
+          set -o pipefail
+          xcodebuild build -project Reader.xcodeproj -scheme Reader_macOS \
+            -destination 'generic/platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | xcbeautify --renderer github-actions
