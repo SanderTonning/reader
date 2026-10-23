@@ -19,6 +19,15 @@ Kjør `xcodegen` på nytt hver gang `project.yml` endres eller filer legges til.
 
 Appen må installeres på nytt hver 7. dag. Koble til telefonen og trykk Run i Xcode, eller bruk [SideStore](https://sidestore.io) for automatisk fornyelse. Data i appen beholdes.
 
+## Bruk
+
+- **Importer egne filer:** `+` › *Importer filer* (EPUB, PDF, MP3/M4B, HTML). Velger du flere lydfiler samtidig, blir de én lydbok.
+- **Lagre artikler:** `+` › *Legg til artikkel* eller *Lim inn lenke*. Fra Safari på iPhone kan du lage en snarvei i Snarveier-appen: *Vis i delingsark* (URL-er) → *Åpne URL* `reader://add?url=[Snarvei-inndata]`.
+- **Åpne bibliotek:** Fanen *Utforsk* har Project Gutenberg, LibriVox og egne OPDS-kataloger.
+- **Ordoppslag:** Trykk på et ord mens du leser. Marker tekst for systemets *Slå opp* og *Oversett*.
+- **Opplesing:** Høyttaler-knappen i leseren. Bedre norske stemmer lastes ned gratis under Innstillinger › Tilgjengelighet › Opplest innhold.
+- **Synk:** Innstillinger › *Velg synkmappe*, og velg samme mappe i iCloud Drive på alle enhetene.
+
 ## Struktur
 
 | Mappe | Innhold |
