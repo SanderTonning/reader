@@ -43,6 +43,9 @@ struct ReaderView: View {
                 }
             }
         }
+        #if os(iOS)
+        .toolbar(.hidden, for: .tabBar)
+        #endif
         .task(id: book.id) { await load() }
     }
 

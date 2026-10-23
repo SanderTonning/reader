@@ -136,8 +136,12 @@ struct AudioPlayerView: View {
         .onAppear {
             book.lastOpenedAt = .now
             player.load(book, autoplay: false)
+            player.isFullPlayerVisible = true
         }
-        .onDisappear { player.savePosition() }
+        .onDisappear {
+            player.isFullPlayerVisible = false
+            player.savePosition()
+        }
         .sheet(isPresented: $showBookmarks) {
             BookmarksView(book: book) { position in
                 player.selectTrack(position.track ?? 0, at: position.seconds ?? 0)

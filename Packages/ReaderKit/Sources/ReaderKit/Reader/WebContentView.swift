@@ -158,7 +158,9 @@ struct WebContentView {
           'p, li, blockquote, dd { line-height: inherit !important; }' +
           'h1, h2, h3, h4, p, li, span, div, blockquote { color: inherit !important; background: transparent !important; }' +
           'a { color: ' + a.link + ' !important; }' +
-          'img, svg, video, table { max-width: 100% !important; height: auto !important; }' +
+          'img, video, table { max-width: 100% !important; height: auto !important; }' +
+          // Omslagssider pakker bildet i en <svg height="100%">; height:auto gir den null høyde.
+          'svg { max-width: 100% !important; max-height: 92vh !important; }' +
           'pre { white-space: pre-wrap; }' +
           '.reader-article-header .byline, .reader-article-header .source { opacity: 0.7; font-size: 0.9em; }';
       };

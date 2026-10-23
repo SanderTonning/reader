@@ -53,7 +53,7 @@ public struct RootView: View {
 
     @ViewBuilder
     private var miniPlayer: some View {
-        if let book = player.book {
+        if let book = player.book, !player.isFullPlayerVisible {
             HStack(spacing: 12) {
                 CoverView(book: book).frame(width: 36, height: 36)
                 VStack(alignment: .leading) {

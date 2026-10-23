@@ -21,6 +21,8 @@ public final class AudioPlayer: ObservableObject {
     }
     /// Når sovetimeren stopper avspillingen.
     @Published public private(set) var sleepTimerEnd: Date?
+    /// Minispilleren skjules mens den store spillervisningen er åpen.
+    @Published var isFullPlayerVisible = false
 
     public var isActive: Bool { book != nil && isPlaying }
 
