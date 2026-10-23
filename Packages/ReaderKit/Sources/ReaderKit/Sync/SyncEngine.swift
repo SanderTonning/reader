@@ -267,12 +267,12 @@ public final class SyncEngine: ObservableObject {
     }
 
     /// Bøker fra kataloger kan lastes ned på nytt; egne filer og strømmede spor må deles.
-    static func needsSharedFile(_ book: Book) -> Bool {
+    nonisolated static func needsSharedFile(_ book: Book) -> Bool {
         if book.format == .audio { return book.sourceID == nil }
         return book.remoteURL == nil || book.format == .article
     }
 
-    static func sharedFileName(for book: Book) -> String {
+    nonisolated static func sharedFileName(for book: Book) -> String {
         if book.format == .audio { return book.id.uuidString }
         let ext = (book.fileName.map { ($0 as NSString).pathExtension }).flatMap { $0.isEmpty ? nil : $0 } ?? book.format.rawValue
         return "\(book.id.uuidString).\(ext)"

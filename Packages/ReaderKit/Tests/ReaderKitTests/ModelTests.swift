@@ -37,7 +37,10 @@ final class ModelTests: XCTestCase {
 }
 
 final class SyncTests: XCTestCase {
-    func testSharedFileRules() {
+    @MainActor
+    func testSharedFileRules() throws {
+        let container = try ReaderSchema.makeContainer(inMemory: true)
+        _ = container
         let own = Book(title: "Egen", format: .epub, fileName: "egen.epub")
         XCTAssertTrue(SyncEngine.needsSharedFile(own))
         XCTAssertEqual(SyncEngine.sharedFileName(for: own), "\(own.id.uuidString).epub")
