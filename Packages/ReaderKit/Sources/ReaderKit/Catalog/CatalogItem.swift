@@ -83,7 +83,7 @@ public protocol CatalogProvider: Sendable {
 enum CatalogHTTP {
     static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForRequest = 60
         configuration.httpAdditionalHeaders = ["User-Agent": "Reader/0.1 (hobby e-reader; github.com/SanderTonning/reader)"]
         return URLSession(configuration: configuration)
     }()

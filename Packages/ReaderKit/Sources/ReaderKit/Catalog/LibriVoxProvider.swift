@@ -25,7 +25,12 @@ public struct LibriVoxProvider: CatalogProvider {
 
     public func search(_ query: String) async throws -> CatalogPage {
         // API-et søker enten på tittel eller forfatter; prøv tittel først, så forfatter.
-        let byTitle = try? await page(at: url([URLQueryItem(name: "title", value: "^" + query)]))
+        // Titlene starter aldri med en artikkel ("The Count…" ligger som "Count…"), og søket er bare på starten.
+        var title = query.trimmingCharacters(in: .whitespaces)
+        for article in ["the ", "a ", "an "] where title.lowercased().hasPrefix(article) {
+            title = String(title.dropFirst(article.count))
+        }
+        let byTitle = try? await page(at: url([URLQueryItem(name: "title", value: "^" + title)]))
         if let byTitle, !byTitle.items.isEmpty { return byTitle }
         let lastName = query.split(separator: " ").last.map(String.init) ?? query
         return (try? await page(at: url([URLQueryItem(name: "author", value: lastName)]))) ?? CatalogPage(items: [])

@@ -251,7 +251,7 @@ struct AddSourceView: View {
 
     private static let suggestions: [(String, String)] = [
         ("Project Gutenberg (OPDS)", "https://www.gutenberg.org/ebooks/search.opds/"),
-        ("Feedbooks – offentlig eie", "https://catalog.feedbooks.com/catalog/public_domain.atom"),
+        ("Unglue.it – gratis e-bøker", "https://unglue.it/api/opds/"),
     ]
 
     var body: some View {
