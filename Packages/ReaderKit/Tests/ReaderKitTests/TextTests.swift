@@ -54,3 +54,61 @@ final class TextTests: XCTestCase {
         XCTAssertEqual(ArticleImporter.firstURL(in: "Les denne: https://example.com/a?b=1 nå")?.absoluteString, "https://example.com/a?b=1")
     }
 }
+
+final class CatalogTests: XCTestCase {
+    func testOPDSParsing() throws {
+        let xml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog">
+          <title>Testkatalog</title>
+          <link rel="next" href="/page2.atom" type="application/atom+xml;profile=opds-catalog"/>
+          <entry>
+            <title>Sult</title><id>urn:sult</id>
+            <author><name>Knut Hamsun</name></author>
+            <link rel="http://opds-spec.org/acquisition" href="/sult.epub" type="application/epub+zip"/>
+            <link rel="http://opds-spec.org/image" href="/sult.jpg" type="image/jpeg"/>
+          </entry>
+          <entry>
+            <title>Nye bøker</title><id>urn:nye</id>
+            <link rel="subsection" href="/nye.atom" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+          </entry>
+        </feed>
+        """
+        let tree = try XCTUnwrap(XMLTree.parse(Data(xml.utf8)))
+        let page = OPDSProvider.parse(tree, baseURL: URL(string: "https://example.com/opds/root.atom")!, sourceID: "test")
+        XCTAssertEqual(page.title, "Testkatalog")
+        XCTAssertEqual(page.items.count, 2)
+        XCTAssertEqual(page.items[0].author, "Knut Hamsun")
+        XCTAssertEqual(page.items[0].preferredAcquisition?.url.absoluteString, "https://example.com/sult.epub")
+        XCTAssertEqual(page.items[0].coverURL?.absoluteString, "https://example.com/sult.jpg")
+        XCTAssertTrue(page.items[1].isNavigation)
+        XCTAssertEqual(page.nextPage?.absoluteString, "https://example.com/page2.atom")
+    }
+
+    func testGutendexMapping() throws {
+        let json = """
+        {"next": null, "results": [{"id": 2542, "title": "Et dukkehjem", "authors": [{"name": "Ibsen, Henrik"}],
+          "languages": ["no"], "download_count": 10,
+          "formats": {"application/epub+zip": "https://www.gutenberg.org/ebooks/2542.epub3.images", "image/jpeg": "https://www.gutenberg.org/cache/epub/2542/cover.jpg"}}]}
+        """
+        let response = try JSONDecoder().decode(GutenbergProvider.Response.self, from: Data(json.utf8))
+        let item = try XCTUnwrap(GutenbergProvider().item(response.results[0]))
+        XCTAssertEqual(item.author, "Henrik Ibsen")
+        XCTAssertEqual(item.preferredAcquisition?.format, .epub)
+    }
+
+    func testLibriVoxMapping() throws {
+        let json = """
+        {"books": [{"id": "52", "title": "Pride &amp; Prejudice", "language": "English", "totaltime": "11:35:00",
+          "url_iarchive": "https://archive.org/details/pride_prejudice_librivox",
+          "authors": [{"first_name": "Jane", "last_name": "Austen"}],
+          "sections": [{"section_number": "1", "title": "Chapter 1", "listen_url": "https://archive.org/download/x/ch1.mp3", "playtime": "300"}]}]}
+        """
+        let response = try JSONDecoder().decode(LibriVoxProvider.Response.self, from: Data(json.utf8))
+        let item = try XCTUnwrap(LibriVoxProvider().item(response.books[0]))
+        XCTAssertEqual(item.title, "Pride & Prejudice")
+        XCTAssertEqual(item.author, "Jane Austen")
+        XCTAssertEqual(item.tracks.first?.duration, 300)
+        XCTAssertEqual(item.kind, .audiobook)
+    }
+}

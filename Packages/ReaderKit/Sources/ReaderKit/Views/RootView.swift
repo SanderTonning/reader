@@ -17,6 +17,13 @@ public struct RootView: View {
             .safeAreaInset(edge: .bottom) { miniPlayer }
             .tabItem { Label("Bibliotek", systemImage: "books.vertical") }
             .tag(0)
+
+            NavigationStack {
+                ExploreView()
+            }
+            .safeAreaInset(edge: .bottom) { miniPlayer }
+            .tabItem { Label("Utforsk", systemImage: "building.columns") }
+            .tag(1)
         }
         .environmentObject(importState)
         .onOpenURL(perform: handle)

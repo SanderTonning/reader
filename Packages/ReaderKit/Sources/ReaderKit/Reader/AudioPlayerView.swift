@@ -7,6 +7,14 @@ struct AudioPlayerView: View {
     @Environment(\.modelContext) private var context
     @State private var scrubbing: Double?
     @State private var showBookmarks = false
+    @State private var downloadProgress: Double?
+    @State private var downloadError: String?
+
+    private var needsDownload: Bool {
+        book.tracks.contains { track in
+            track.remoteURL != nil && !(track.fileName.map { FileManager.default.fileExists(atPath: LibraryFolder.books.appendingPathComponent($0).path) } ?? false)
+        }
+    }
 
     private let rates: [Float] = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
 
@@ -88,6 +96,17 @@ struct AudioPlayerView: View {
                 .font(.title3)
                 .buttonStyle(.borderless)
 
+                if needsDownload {
+                    if let downloadProgress {
+                        ProgressView("Laster ned …", value: downloadProgress).padding(.horizontal)
+                    } else {
+                        Button { Task { await download() } } label: {
+                            Label("Last ned for lytting uten nett", systemImage: "arrow.down.circle")
+                        }
+                    }
+                }
+                if let downloadError { Text(downloadError).font(.caption).foregroundStyle(.red) }
+
                 if player.tracks.count > 1 {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(player.tracks) { track in
@@ -124,6 +143,19 @@ struct AudioPlayerView: View {
                 player.selectTrack(position.track ?? 0, at: position.seconds ?? 0)
             }
         }
+    }
+
+    private func download() async {
+        downloadError = nil
+        downloadProgress = 0
+        do {
+            try await CatalogImporter.downloadAudio(book) { value in
+                Task { @MainActor in downloadProgress = value }
+            }
+        } catch {
+            downloadError = "Nedlastingen feilet: \(error.localizedDescription)"
+        }
+        downloadProgress = nil
     }
 
     private func addBookmark() {
