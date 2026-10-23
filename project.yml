@@ -42,6 +42,9 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         LSApplicationCategoryType: public.app-category.books
+        CFBundleURLTypes:
+          - CFBundleURLName: no.sandertonning.reader
+            CFBundleURLSchemes: [reader]
         CFBundleDocumentTypes:
           - CFBundleTypeName: EPUB
             LSHandlerRank: Alternate
