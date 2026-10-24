@@ -100,7 +100,7 @@ public final class SpeechReader: NSObject, ObservableObject {
         if synthesizer.isSpeaking || synthesizer.isPaused {
             reportPosition()
         }
-        pendingStop = true
+        currentUtterance = nil
         synthesizer.stopSpeaking(at: .immediate)
         isSpeaking = false
         isPaused = false
@@ -117,7 +117,9 @@ public final class SpeechReader: NSObject, ObservableObject {
 
     // MARK: - Intern logikk
 
-    private var pendingStop = false
+    /// Bare utsagnet som leses nå får styre markering og videre lesing. Når et utsagn avbrytes
+    /// (stemme- eller hastighetsbytte, hopp), kan det gamle fortsatt melde «ferdig» etterpå.
+    private var currentUtterance: AVSpeechUtterance?
 
     private func load(section: Int) {
         guard let source else { return }
@@ -138,9 +140,8 @@ public final class SpeechReader: NSObject, ObservableObject {
             load(section: section + 1)
             index = 0
         }
-        pendingStop = true
+        currentUtterance = nil
         synthesizer.stopSpeaking(at: .immediate)
-        pendingStop = false
 
         paragraphIndex = index
         paragraphStartOffset = paragraphs.prefix(index).reduce(0) { $0 + $1.count + 1 }
@@ -154,6 +155,7 @@ public final class SpeechReader: NSObject, ObservableObject {
         } else if let language = detectedLanguage {
             utterance.voice = Self.voices(for: language).first ?? AVSpeechSynthesisVoice(language: language)
         }
+        currentUtterance = utterance
         synthesizer.speak(utterance)
         isSpeaking = true
         isPaused = false
@@ -230,14 +232,17 @@ public final class SpeechReader: NSObject, ObservableObject {
 
 extension SpeechReader: AVSpeechSynthesizerDelegate {
     nonisolated public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
+        nonisolated(unsafe) let spoken = utterance
         Task { @MainActor in
+            guard self.currentUtterance === spoken else { return }
             self.spokenRange = characterRange
         }
     }
 
     nonisolated public func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        nonisolated(unsafe) let spoken = utterance
         Task { @MainActor in
-            guard !self.pendingStop, self.isSpeaking else { return }
+            guard self.currentUtterance === spoken, self.isSpeaking else { return }
             self.speak(paragraph: self.paragraphIndex + 1)
         }
     }
