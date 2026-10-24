@@ -146,6 +146,13 @@ struct WebContentView {
       if (window.__readerInstalled) return;
       window.__readerInstalled = true;
       var post = function(m) { window.webkit.messageHandlers.reader.postMessage(m); };
+      // EPUB-kapitler mangler ofte viewport-tag; da tegner WebKit siden 980 px bred og krymper teksten.
+      if (!document.querySelector('meta[name=viewport]')) {
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1';
+        (document.head || document.documentElement).appendChild(meta);
+      }
       var style = document.createElement('style');
       style.id = 'reader-style';
       (document.head || document.documentElement).appendChild(style);
