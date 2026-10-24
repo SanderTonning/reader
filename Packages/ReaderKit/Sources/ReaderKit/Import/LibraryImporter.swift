@@ -11,6 +11,7 @@ import AppKit
 @MainActor
 public enum LibraryImporter {
     public static let supportedTypes: [UTType] = [.epub, .pdf, .audio, .mp3, .mpeg4Audio, .html, .plainText]
+        + MOBIConverter.fileExtensions.compactMap { UTType(filenameExtension: $0) }
 
     public struct Result {
         public var added: [Book] = []
@@ -61,6 +62,12 @@ public enum LibraryImporter {
     }
 
     static func importSingle(_ url: URL, into context: ModelContext) async throws -> Book {
+        if MOBIConverter.fileExtensions.contains(url.pathExtension.lowercased()) {
+            // Store filer tar tid å pakke ut; gjør det utenfor hovedtråden så appen ikke fryser.
+            let epub = try await Task.detached(priority: .userInitiated) { try MOBIConverter.convertToEPUB(url) }.value
+            defer { try? FileManager.default.removeItem(at: epub.deletingLastPathComponent()) }
+            return try await importSingle(epub, into: context)
+        }
         guard let format = BookFormat(fileExtension: url.pathExtension) else {
             throw CocoaError(.fileReadUnsupportedScheme)
         }

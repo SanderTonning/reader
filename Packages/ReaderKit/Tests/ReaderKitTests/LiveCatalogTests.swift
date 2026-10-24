@@ -63,3 +63,29 @@ final class LiveCatalogTests: XCTestCase {
         XCTAssertGreaterThan(paragraphs.count, 20)
     }
 }
+
+final class LiveMOBITests: XCTestCase {
+    override func setUpWithError() throws {
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["READER_LIVE_TESTS"] == "1")
+    }
+
+    /// Gutenbergs «Kindle»-format er en kombinert MOBI-fil; den eldre delen skal kunne leses.
+    func testGutenbergMOBIConvertsToReadableEPUB() async throws {
+        let source = URL(string: "https://www.gutenberg.org/ebooks/2542.kindle.images")!
+        let (tmp, _) = try await URLSession.shared.download(from: source)
+        let mobi = FileManager.default.temporaryDirectory.appendingPathComponent("live.mobi")
+        try? FileManager.default.removeItem(at: mobi)
+        try FileManager.default.moveItem(at: tmp, to: mobi)
+
+        let epub = try MOBIConverter.convertToEPUB(mobi)
+        let id = UUID()
+        defer { EPUBPublication.removeCache(for: id) }
+        let pub = try EPUBPublication.open(epubAt: epub, bookID: id)
+        print("MOBI: \(pub.title ?? "-") av \(pub.author ?? "-"), \(pub.chapters.count) kapitler, omslag=\(pub.coverURL != nil), toc=\(pub.toc.prefix(4).map(\.title))")
+        XCTAssertEqual(pub.title?.isEmpty, false)
+        XCTAssertGreaterThan(pub.chapters.count, 1)
+        let paragraphs = pub.chapters.indices.flatMap { pub.paragraphs(inChapter: $0) }
+        XCTAssertGreaterThan(paragraphs.count, 50)
+        print("Eksempel: \(paragraphs.dropFirst(20).first ?? "")")
+    }
+}
