@@ -19,6 +19,8 @@ struct WebContentView {
     var onProgress: (Double) -> Void
     var onWordTap: (WordLookup) -> Void
     var onNavigate: (URL) -> Void
+    /// Klyping med to fingre gir ny tekststørrelse (1.0 = 100 %), som i en nettleser med tekstzoom.
+    var onZoom: (Double) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
 
@@ -120,6 +122,8 @@ struct WebContentView {
             switch type {
             case "progress":
                 if let value = (body["value"] as? NSNumber)?.doubleValue { parent.onProgress(value) }
+            case "zoom":
+                if let value = (body["value"] as? NSNumber)?.doubleValue { parent.onZoom(value) }
             case "word":
                 guard parent.tapToLookUp, let word = body["word"] as? String else { return }
                 parent.onWordTap(WordLookup(word: word, context: Self.sentence(around: word, in: body["context"] as? String ?? "")))
@@ -150,19 +154,22 @@ struct WebContentView {
       if (!document.querySelector('meta[name=viewport]')) {
         var meta = document.createElement('meta');
         meta.name = 'viewport';
-        meta.content = 'width=device-width, initial-scale=1';
+        meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
         (document.head || document.documentElement).appendChild(meta);
       }
       var style = document.createElement('style');
       style.id = 'reader-style';
       (document.head || document.documentElement).appendChild(style);
+      var baseSize = 100, zoomSize = null;
       window.readerApply = function(a) {
+        baseSize = a.size;
+        if (document.body) document.body.style.removeProperty('font-size');
         style.textContent =
           'html { -webkit-text-size-adjust: none; }' +
           'html, body { background: ' + a.bg + ' !important; color: ' + a.fg + ' !important; }' +
           'body { font-family: ' + a.font + ' !important; font-size: ' + a.size + '% !important; line-height: ' + a.lineHeight + ' !important;' +
           ' max-width: 38em; margin: 0 auto !important; padding: 1.5em 1.25em 5em !important; overflow-wrap: break-word; }' +
-          'p, li, blockquote, dd { line-height: inherit !important; }' +
+          'p, li, blockquote, dd { line-height: inherit !important; -webkit-hyphens: auto; hyphens: auto; }' +
           'h1, h2, h3, h4, p, li, span, div, blockquote { color: inherit !important; background: transparent !important; }' +
           'a { color: ' + a.link + ' !important; }' +
           'img, video, table { max-width: 100% !important; height: auto !important; }' +
@@ -171,6 +178,18 @@ struct WebContentView {
           'pre { white-space: pre-wrap; }' +
           '.reader-article-header .byline, .reader-article-header .source { opacity: 0.7; font-size: 0.9em; }';
       };
+      // Klyp endrer tekststørrelsen (teksten brytes om), i stedet for å forstørre siden.
+      document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+      document.addEventListener('gesturechange', function(e) {
+        e.preventDefault();
+        zoomSize = Math.round(Math.min(250, Math.max(70, baseSize * e.scale)) / 5) * 5;
+        document.body.style.setProperty('font-size', zoomSize + '%', 'important');
+      }, { passive: false });
+      document.addEventListener('gestureend', function(e) {
+        e.preventDefault();
+        if (zoomSize !== null && zoomSize !== baseSize) post({ type: 'zoom', value: zoomSize / 100 });
+        zoomSize = null;
+      }, { passive: false });
       var timer = null;
       var report = function() {
         var h = document.documentElement.scrollHeight - window.innerHeight;

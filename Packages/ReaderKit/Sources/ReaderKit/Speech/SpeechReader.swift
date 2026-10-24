@@ -38,12 +38,27 @@ public final class SpeechReader: NSObject, ObservableObject {
         voiceIdentifier = UserDefaults.standard.string(forKey: "speech.voice")
     }
 
+    static func qualityLabel(_ quality: AVSpeechSynthesisVoiceQuality) -> String {
+        switch quality {
+        case .premium: " · Premium"
+        case .enhanced: " · Forbedret"
+        default: ""
+        }
+    }
+
     /// Stemmer for et språk, beste kvalitet først.
     public static func voices(for language: String?) -> [AVSpeechSynthesisVoice] {
         let all = AVSpeechSynthesisVoice.speechVoices()
         let prefix = language.map { String($0.prefix(2)) }
-        let matching = prefix.map { p in all.filter { $0.language.hasPrefix(p) } } ?? all
-        return matching.sorted { $0.quality.rawValue > $1.quality.rawValue }
+        // Morostemmene (Bells, Bad News …) har samme kvalitet som vanlige stemmer og havnet ofte først.
+        let usable = all.filter { !$0.voiceTraits.contains(.isNoveltyVoice) && !$0.voiceTraits.contains(.isPersonalVoice) }
+        let matching = prefix.map { p in usable.filter { $0.language.hasPrefix(p) } } ?? usable
+        let systemDefault = language.flatMap { AVSpeechSynthesisVoice(language: $0)?.identifier }
+        return matching.sorted { a, b in
+            if a.quality != b.quality { return a.quality.rawValue > b.quality.rawValue }
+            if (a.identifier == systemDefault) != (b.identifier == systemDefault) { return a.identifier == systemDefault }
+            return a.name < b.name
+        }
     }
 
     public var language: String? { detectedLanguage }

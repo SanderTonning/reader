@@ -52,7 +52,8 @@ struct TextReaderView: View {
                     onWordTap: { lookup = $0 },
                     onNavigate: { url in
                         if let index = document.chapterIndex(for: url) { chapterIndex = index }
-                    }
+                    },
+                    onZoom: { fontScale = $0 }
                 )
                 .ignoresSafeArea(edges: .bottom)
             }

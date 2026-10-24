@@ -65,11 +65,13 @@ struct SpeechSettingsView: View {
             Picker("Stemme", selection: $speech.voiceIdentifier) {
                 Text("Automatisk").tag(String?.none)
                 ForEach(SpeechReader.voices(for: speech.language), id: \.identifier) { voice in
-                    Text("\(voice.name) (\(voice.language))").tag(Optional(voice.identifier))
+                    Text("\(voice.name) (\(voice.language))\(SpeechReader.qualityLabel(voice.quality))").tag(Optional(voice.identifier))
                 }
             }
             .onChange(of: speech.voiceIdentifier) { speech.restartCurrentWithNewSettings() }
-            Text("Last ned bedre stemmer gratis under Innstillinger › Tilgjengelighet › Opplest innhold › Stemmer.")
+            Text(SpeechReader.voices(for: speech.language).first.map { $0.quality == .default } ?? true
+                 ? "Bare enkle stemmer er installert for dette språket, og de låter robotaktig. Last ned en «Forbedret» eller «Premium»-stemme gratis under Innstillinger › Tilgjengelighet › Opplest innhold › Stemmer."
+                 : "Flere stemmer kan lastes ned gratis under Innstillinger › Tilgjengelighet › Opplest innhold › Stemmer.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
