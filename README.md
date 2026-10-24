@@ -1,3 +1,44 @@
 # Reader
 
-En Kindle-lignende app for iOS og macOS: egne e-bøker, lydbøker og artikler, åpne bibliotek, opplesing og synk mellom enheter.
+En Kindle-lignende app for iPhone, iPad og Mac. Den samler egne e-bøker, lydbøker og lagrede artikler med bøker fra åpne bibliotek, kan lese all tekst høyt, og husker hvor du er på tvers av enheter.
+
+## Kom i gang (macOS)
+
+1. Installer Xcode fra App Store og [Homebrew](https://brew.sh).
+2. Installer XcodeGen: `brew install xcodegen`
+3. Generer prosjektet og åpne det:
+   ```sh
+   xcodegen
+   open Reader.xcodeproj
+   ```
+4. Velg skjemaet `Reader_macOS` eller `Reader_iOS`, velg teamet ditt under *Signing & Capabilities* (gratis Apple-ID holder), og trykk Run.
+
+Kjør `xcodegen` på nytt hver gang `project.yml` endres eller filer legges til. Selve prosjektfilen er ikke sjekket inn.
+
+### På iPhone med gratis Apple-ID
+
+Appen må installeres på nytt hver 7. dag. Koble til telefonen og trykk Run i Xcode, eller bruk [SideStore](https://sidestore.io) for automatisk fornyelse. Data i appen beholdes.
+
+## Bruk
+
+- **Importer egne filer:** `+` › *Importer filer* (EPUB, PDF, MP3/M4B, HTML). Velger du flere lydfiler samtidig, blir de én lydbok.
+- **Lagre artikler:** `+` › *Legg til artikkel* eller *Lim inn lenke*. Fra Safari på iPhone kan du lage en snarvei i Snarveier-appen: *Vis i delingsark* (URL-er) → *Åpne URL* `reader://add?url=[Snarvei-inndata]`.
+- **Åpne bibliotek:** Fanen *Utforsk* har Project Gutenberg, LibriVox og egne OPDS-kataloger.
+- **Ordoppslag:** Trykk på et ord mens du leser. Marker tekst for systemets *Slå opp* og *Oversett*.
+- **Opplesing:** Høyttaler-knappen i leseren. Bedre norske stemmer lastes ned gratis under Innstillinger › Tilgjengelighet › Opplest innhold.
+- **Synk:** Innstillinger › *Velg synkmappe*, og velg samme mappe i iCloud Drive på alle enhetene.
+
+## Struktur
+
+| Mappe | Innhold |
+| --- | --- |
+| `App/` | App-inngangen, felles for iOS og macOS |
+| `Packages/ReaderKit/` | All logikk og alle skjermbilder (SwiftUI, SwiftData) |
+| `project.yml` | XcodeGen-oppsett for appen |
+| `.github/workflows/ci.yml` | Tester pakken og bygger begge appene ved hver push |
+
+## Tester
+
+```sh
+swift test --package-path Packages/ReaderKit
+```
